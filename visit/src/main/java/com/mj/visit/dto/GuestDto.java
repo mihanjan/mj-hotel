@@ -1,18 +1,18 @@
-package com.mj.clients.guest.dto;
+package com.mj.visit.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
 public class GuestDto {
     private String id;
     private String fullName;
-    private String passportId;
+    private String passport;
     private String email;
     private Double discountPercent;
 }

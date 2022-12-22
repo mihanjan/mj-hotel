@@ -1,4 +1,4 @@
-package com.mj.exception;
+package com.mj.exception.business;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

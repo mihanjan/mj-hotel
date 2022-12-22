@@ -1,19 +1,12 @@
-package com.mj.visit.dto.email;
+package com.mj.visit.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Data;
 
+@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
 public class EmailDto {
-
     private String address;
-
-    private EmailType emailType;
-
+    private String subject;
     private String text;
 }

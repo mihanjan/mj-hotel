@@ -1,18 +1,28 @@
 server:
-  port: 8083
+  port: 8081
 spring:
   application:
     name: api-gateway
   zipkin:
-    base-url: http://localhost:9411
-#  cloud:
-#    gateway:
-#      routes:
-#        - id: customer
-#          uri: lb://CUSTOMER
-#          predicates:
-#            - Path=/api/v1/customer/**
+    base-url: http://zipkin:9411
+  cloud:
+    gateway:
+      routes:
+        - id: room
+          uri: lb://ROOM
+          predicates:
+            - Path=/api/v1/rooms/**
+
+        - id: guest
+          uri: lb://GUEST
+          predicates:
+            - Path=/api/v1/guests/**
+
+        - id: visit
+          uri: lb://VISIT
+          predicates:
+            - Path=/api/v1/visits/**
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka

@@ -1,5 +1,7 @@
-package com.mj.exception;
+package com.mj.exception.handler;
 
+import com.mj.exception.business.SimpleHotelException;
+import com.mj.exception.dto.ErrorResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

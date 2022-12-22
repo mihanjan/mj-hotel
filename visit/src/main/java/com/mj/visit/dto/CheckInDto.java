@@ -5,10 +5,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class VisitDto {
-    private String fullName;
-    private String passport;
-    private String email;
+public class CheckInDto {
+    private String guestId;
     private Short roomNumber;
     private LocalDateTime departure;
 }
