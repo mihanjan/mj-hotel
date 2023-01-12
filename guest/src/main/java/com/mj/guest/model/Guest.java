@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Email;
@@ -26,9 +26,11 @@ public class Guest {
     @NotNull
     @NotBlank
     @Size(min = 10, max = 10)
+    @Indexed(unique = true)
     private String passport;
 
     @Email
+    @Indexed(unique = true)
     private String email;
 
     @NotNull

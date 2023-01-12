@@ -6,6 +6,7 @@ spring:
   data:
     mongodb:
       uri: mongodb://mongo:27017/guests
+      auto-index-creation: true
   zipkin:
     base-url: http://zipkin:9411
 eureka:

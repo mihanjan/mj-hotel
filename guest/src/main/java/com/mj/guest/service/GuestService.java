@@ -2,6 +2,7 @@ package com.mj.guest.service;
 
 import com.mj.exception.business.EntityNotFoundException;
 import com.mj.guest.dto.GuestDto;
+import com.mj.guest.dto.NewGuestDto;
 import com.mj.guest.model.Guest;
 import com.mj.guest.repository.GuestRepository;
 import com.mj.guest.util.DiscountUtil;
@@ -28,34 +29,49 @@ public class GuestService {
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Guest with id %s not found", id), GUEST_NOT_FOUND));
     }
 
-    @Transactional
-    public GuestDto saveOrUpdate(GuestDto guestDto) {
-//        Guest guest = guestRepository.findByPassport(guestDto.getPassport()).get();
-//
-//        if (!guest.getFullName().equals(guestDto.getFullName())) {
-//            throw new EntityNotFoundException("123", GUEST_NOT_FOUND);
-//        }
-
-        Guest saved = guestRepository.save(
-                guestRepository.findByPassport(guestDto.getPassport()).stream()
-                        .peek(guest -> guest.setEmail(guestDto.getEmail()))
-                        .findFirst()
-                        .orElseGet(() -> modelMapper.map(guestDto, Guest.class)));
-
-        return modelMapper.map(saved, GuestDto.class);
+    public GuestDto findByPassport(String passport) {
+        return guestRepository.findByPassport(passport)
+                .map(guest -> modelMapper.map(guest, GuestDto.class))
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Guest with passport %s not found", passport), GUEST_NOT_FOUND));
     }
 
     @Transactional
-    public GuestDto save(GuestDto guestDto) {
-        Guest guest = guestRepository.save(modelMapper.map(guestDto, Guest.class));
+    public GuestDto save(NewGuestDto newGuestDto) {
+        Guest guest = guestRepository.save(modelMapper.map(newGuestDto, Guest.class));
         return modelMapper.map(guest, GuestDto.class);
     }
 
     @Transactional
-    public GuestDto updateDiscount(String guestId, double orderCost) {
-        Guest guest = guestRepository.findById(new ObjectId(guestId)).orElseThrow(
-                () -> new EntityNotFoundException(String.format("Guest with id %s not found", guestId), GUEST_NOT_FOUND));
+    public GuestDto update(String id, GuestDto guestDto) {
+        Guest guest = guestRepository.findById(new ObjectId(id)).orElseThrow(
+                () -> new EntityNotFoundException(String.format("Guest with id %s not found", id), GUEST_NOT_FOUND));
+
+        if (guestDto.getPassport() != null) {
+            guest.setPassport(guestDto.getPassport());
+        }
+        if (guestDto.getFullName() != null) {
+            guest.setFullName(guestDto.getFullName());
+        }
+        if (guestDto.getEmail() != null) {
+            guest.setEmail(guestDto.getEmail());
+        }
+        if (guestDto.getDiscountPercent() != null) {
+            guest.setDiscountPercent(guestDto.getDiscountPercent());
+        }
+
+        return modelMapper.map(guestRepository.save(guest), GuestDto.class);
+    }
+
+    @Transactional
+    public GuestDto discountRecount(String id, double orderCost) {
+        Guest guest = guestRepository.findById(new ObjectId(id)).orElseThrow(
+                () -> new EntityNotFoundException(String.format("Guest with id %s not found", id), GUEST_NOT_FOUND));
         guest.setDiscountPercent(discountUtil.calculateDiscount(guest.getDiscountPercent(), orderCost));
         return modelMapper.map(guestRepository.save(guest), GuestDto.class);
+    }
+
+    @Transactional
+    public void delete(String id) {
+        guestRepository.deleteById(new ObjectId(id));
     }
 }

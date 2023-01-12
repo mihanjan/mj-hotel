@@ -25,7 +25,7 @@ public class Visit {
 
     @Column(updatable = false)
     @NotNull
-    private Short roomNumber;
+    private Integer roomId;
 
     @Column(updatable = false)
     @NotNull

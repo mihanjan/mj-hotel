@@ -20,20 +20,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.mj.exception.handler.GlobalErrorCode.*;
+import static com.mj.visit.util.VisitUtils.equalsCheckOnNull;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class VisitService {
 
     private final VisitRepository visitRepository;
-    private final KafkaProducer kafkaProducer;
+    private final KafkaProducer producer;
     private final RoomService roomService;
     private final GuestService guestService;
     private final ModelMapper modelMapper;
 
     @Transactional
     public VisitDto checkIn(CheckInDto checkInDto) throws JsonProcessingException {
-        RoomDto roomDto = roomService.getRoom(checkInDto.getRoomNumber());
+        RoomDto roomDto = roomService.getRoom(checkInDto.getRoomId());
         if (roomDto.isOccupied()) {
             throw new RoomUnavailableException(String.format("Room number %d is already occupied", roomDto.getNumber()), VISIT_ROOM_OCCUPIED);
         }
@@ -48,16 +50,16 @@ public class VisitService {
 
         Visit visit = visitRepository.save(Visit.builder()
                 .guestId(guestDto.getId())
-                .roomNumber(roomDto.getNumber())
+                .roomId(roomDto.getId())
                 .arrival(arrival)
                 .departure(departure)
                 .cost(VisitUtils.calculateCost(arrival, departure, roomDto.getPricePerHour(), guestDto.getDiscountPercent()))
                 .active(true)
                 .build());
 
-        roomService.setRoomOccupation(checkInDto.getRoomNumber(), true);
+        roomService.setRoomOccupation(roomDto.getId(), true);
 
-        kafkaProducer.sendMessage(EmailDto.builder()
+        producer.sendMessage(EmailDto.builder()
                 .address(guestDto.getEmail())
                 .subject("Check in")
                 .text(visit.toString())
@@ -67,24 +69,27 @@ public class VisitService {
     }
 
     @Transactional
-    public void departure(Short roomNumber) throws JsonProcessingException {
-        Visit visit = visitRepository.findByActiveIsTrueAndRoomNumber(roomNumber).orElseThrow(
-                () -> new EntityNotFoundException(String.format("Active visit at room number %d not found", roomNumber), VISIT_NOT_FOUND));
+    public void departure(Integer roomId) throws JsonProcessingException {
+        Visit visit = visitRepository.findByActiveIsTrueAndRoomId(roomId).orElseThrow(
+                () -> new EntityNotFoundException(String.format("Active visit at room (id = %d) not found", roomId), VISIT_NOT_FOUND));
         visit.setActive(false);
         visit = visitRepository.save(visit);
 
-        roomService.setRoomOccupation(visit.getRoomNumber(), false);
+        roomService.setRoomOccupation(visit.getRoomId(), false);
         GuestDto guestDto = guestService.updateDiscount(visit.getGuestId(), visit.getCost());
 
-        kafkaProducer.sendMessage(EmailDto.builder()
+        producer.sendMessage(EmailDto.builder()
                 .address(guestDto.getEmail())
                 .subject("Departure")
-                .text(visit.toString())
+                .text(guestDto.toString())
                 .build());
     }
 
-    public List<VisitDto> getVisits(Boolean active) {
-        return (active != null ? visitRepository.findAllByActive(active) : visitRepository.findAll()).stream()
+    public List<VisitDto> getVisits(Boolean active, String guestId, Integer roomId) {
+        return visitRepository.findAll().stream()
+                .filter(visit -> equalsCheckOnNull(active, visit.isActive(), true))
+                .filter(visit -> equalsCheckOnNull(guestId, visit.getGuestId(), true))
+                .filter(visit -> equalsCheckOnNull(roomId, visit.getRoomId(), true))
                 .map(visit -> modelMapper.map(visit, VisitDto.class))
                 .collect(Collectors.toList());
     }
